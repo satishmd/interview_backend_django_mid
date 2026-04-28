@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from rest_framework.response import Response
 from rest_framework.request import Request
 from rest_framework.views import APIView
@@ -37,12 +39,67 @@ class InventoryListCreateView(APIView):
         return Response(serializer.data, status=201)
 
     def get(self, request: Request, *args, **kwargs) -> Response:
-        serializer = self.serializer_class(self.get_queryset(), many=True)
+        queryset = self.get_queryset()
+        offset, limit = self.get_pagination_params(request)
+        created_after = request.query_params.get("created_after")
 
-        return Response(serializer.data, status=200)
+        if created_after:
+            try:
+                parsed_date = self.parse_created_after(created_after)
+            except ValueError as exc:
+                return Response({"error": str(exc)}, status=400)
+
+            queryset = queryset.filter(created_at__gt=parsed_date)
+        
+        paginated_queryset = queryset[offset : offset + limit]
+        serializer = self.serializer_class(paginated_queryset, many=True)
+
+        return Response(
+            {
+                "count": queryset.count(),
+                "offset": offset,
+                "limit": limit,
+                "results": serializer.data,
+            },
+            status=200,
+        )
+
+    def get_pagination_params(self, request: Request) -> tuple[int, int]:
+        offset = request.query_params.get("offset", 0)
+        limit = request.query_params.get("limit", 3)
+
+        try:
+            offset = int(offset)
+        except (TypeError, ValueError):
+            offset = 0
+
+        try:
+            limit = int(limit)
+        except (TypeError, ValueError):
+            limit = 3
+
+        if offset < 0:
+            offset = 0
+        if limit <= 0:
+            limit = 3
+
+        return offset, min(limit, 100)
 
     def get_queryset(self):
         return self.queryset.all()
+
+    @staticmethod
+    def parse_created_after(value: str) -> datetime:
+        value = value.strip()
+
+        try:
+            return datetime.fromisoformat(value)
+        except ValueError:
+            raise ValueError(
+                "created_after must be ISO 8601 format, e.g. 2026-04-27 or 2026-04-27T15:00:00"
+            )
+
+
 
 
 class InventoryRetrieveUpdateDestroyView(APIView):
