@@ -165,7 +165,7 @@ class InventoryListCreateViewTestCase(TestCase):
         response = self.client.get(self.url)
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.data), 2)
+        self.assertEqual(len(response.data['results']), 2)
 
     def test_list_inventory_with_created_after_filter(self):
         """Test filtering inventory by created_after date"""
@@ -205,8 +205,8 @@ class InventoryListCreateViewTestCase(TestCase):
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.data), 1)
-        self.assertEqual(response.data[0]["name"], "The Matrix")
+        self.assertEqual(len(response.data['results']), 1)
+        self.assertEqual(response.data['results'][0]["name"], "The Matrix")
 
     def test_list_inventory_with_invalid_created_after_format(self):
         """Test filtering with invalid ISO 8601 format raises error"""
@@ -252,8 +252,8 @@ class InventoryListCreateViewTestCase(TestCase):
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.data), 1)
-        self.assertEqual(response.data[0]["name"], "Inception")
+        self.assertEqual(len(response.data['results']), 1)
+        self.assertEqual(response.data['results'][0]["name"], "Inception")
 
     def test_list_inventory_with_future_created_after_returns_empty(self):
         """Test filtering with future date returns no results"""
@@ -276,7 +276,7 @@ class InventoryListCreateViewTestCase(TestCase):
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.data), 0)
+        self.assertEqual(len(response.data['results']), 0)
 
     def test_create_inventory_with_multiple_tags(self):
         """Test creating inventory with multiple tags"""

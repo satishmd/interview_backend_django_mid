@@ -39,7 +39,8 @@ class InventoryListCreateView(APIView):
         return Response(serializer.data, status=201)
 
     def get(self, request: Request, *args, **kwargs) -> Response:
-        queryset = self.queryset.all()
+        queryset = self.get_queryset()
+        offset, limit = self.get_pagination_params(request)
         created_after = request.query_params.get("created_after")
 
         if created_after:
@@ -49,10 +50,40 @@ class InventoryListCreateView(APIView):
                 return Response({"error": str(exc)}, status=400)
 
             queryset = queryset.filter(created_at__gt=parsed_date)
+        
+        paginated_queryset = queryset[offset : offset + limit]
+        serializer = self.serializer_class(paginated_queryset, many=True)
 
-        serializer = self.serializer_class(queryset, many=True)
+        return Response(
+            {
+                "count": queryset.count(),
+                "offset": offset,
+                "limit": limit,
+                "results": serializer.data,
+            },
+            status=200,
+        )
 
-        return Response(serializer.data, status=200)
+    def get_pagination_params(self, request: Request) -> tuple[int, int]:
+        offset = request.query_params.get("offset", 0)
+        limit = request.query_params.get("limit", 3)
+
+        try:
+            offset = int(offset)
+        except (TypeError, ValueError):
+            offset = 0
+
+        try:
+            limit = int(limit)
+        except (TypeError, ValueError):
+            limit = 3
+
+        if offset < 0:
+            offset = 0
+        if limit <= 0:
+            limit = 3
+
+        return offset, min(limit, 100)
 
     def get_queryset(self):
         return self.queryset.all()
