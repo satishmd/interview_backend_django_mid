@@ -1,6 +1,6 @@
+from django.shortcuts import render,get_object_or_404
 from datetime import datetime
 
-from django.shortcuts import render
 from rest_framework import generics
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -50,29 +50,16 @@ class OrderListCreateView(generics.ListCreateAPIView):
                 {"error": "Date must be in ISO 8601 format (YYYY-MM-DD)."}
             )
 
-
-class DeactivateOrderView(APIView):
-
-    def patch(self, request: Request, *args, **kwargs) -> Response:
-        order_id = kwargs.get("id")
-
-        try:
-            order = Order.objects.get(id=order_id)
-        except Order.DoesNotExist:
-            return Response({"error": "Order not found."}, status=404)
-        
-        order.is_active = False
-
-        order.save(update_fields=["is_active"])
-
-        serializer = OrderSerializer(order)
-        return Response(serializer.data, status=200)
-
-
 class OrderTagListCreateView(generics.ListCreateAPIView):
     queryset = OrderTag.objects.all()
     serializer_class = OrderTagSerializer
 
+class OrderTagsByOrderListView(generics.ListAPIView):
+    serializer_class = OrderTagSerializer
+
+    def get_queryset(self):
+        order = get_object_or_404(Order, pk=self.kwargs["order_id"])
+        return order.tags.all()
 
 class DeactivateOrderView(APIView):
     def patch(self, request, id, *args, **kwargs):
