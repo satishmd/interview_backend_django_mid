@@ -5,5 +5,5 @@ from pydantic import BaseModel
 class InventoryMetaData(BaseModel):
     year: int
     actors: list[str]
-    imdb_rating: Decimal
+    imdb_rating: float
     rotten_tomatoes_rating: int
