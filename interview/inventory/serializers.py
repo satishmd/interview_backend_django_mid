@@ -27,9 +27,9 @@ class InventoryTypeSerializer(serializers.ModelSerializer):
 
 
 class InventorySerializer(serializers.ModelSerializer):
-    type = InventoryTypeSerializer()
-    language = InventoryLanguageSerializer()
-    tags = InventoryTagSerializer(many=True)
+    type = serializers.PrimaryKeyRelatedField(queryset=InventoryType.objects.all())
+    language = serializers.PrimaryKeyRelatedField(queryset=InventoryLanguage.objects.all())
+    tags = serializers.PrimaryKeyRelatedField(queryset=InventoryTag.objects.all(), many=True)
     metadata = serializers.JSONField()
 
     class Meta:
