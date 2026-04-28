@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from rest_framework.response import Response
 from rest_framework.request import Request
 from rest_framework.views import APIView
@@ -39,6 +41,16 @@ class InventoryListCreateView(APIView):
     def get(self, request: Request, *args, **kwargs) -> Response:
         queryset = self.get_queryset()
         offset, limit = self.get_pagination_params(request)
+        created_after = request.query_params.get("created_after")
+
+        if created_after:
+            try:
+                parsed_date = self.parse_created_after(created_after)
+            except ValueError as exc:
+                return Response({"error": str(exc)}, status=400)
+
+            queryset = queryset.filter(created_at__gt=parsed_date)
+        
         paginated_queryset = queryset[offset : offset + limit]
         serializer = self.serializer_class(paginated_queryset, many=True)
 
@@ -75,6 +87,19 @@ class InventoryListCreateView(APIView):
 
     def get_queryset(self):
         return self.queryset.all()
+
+    @staticmethod
+    def parse_created_after(value: str) -> datetime:
+        value = value.strip()
+
+        try:
+            return datetime.fromisoformat(value)
+        except ValueError:
+            raise ValueError(
+                "created_after must be ISO 8601 format, e.g. 2026-04-27 or 2026-04-27T15:00:00"
+            )
+
+
 
 
 class InventoryRetrieveUpdateDestroyView(APIView):
