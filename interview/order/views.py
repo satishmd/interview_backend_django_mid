@@ -55,7 +55,7 @@ class OrderTagListCreateView(generics.ListCreateAPIView):
     serializer_class = OrderTagSerializer
 
 class OrdersByTagListView(generics.ListAPIView):
-    serializer_class = OrderTagSerializer
+    serializer_class = OrderSerializer
 
     def get_queryset(self):
         tag = get_object_or_404(OrderTag, pk=self.kwargs["tag_id"])
